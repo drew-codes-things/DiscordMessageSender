@@ -234,10 +234,10 @@
             const get = id => (document.getElementById(id)?.value || '').length;
             let total = get('title') + get('description') + get('author') + get('footer');
             const container = document.getElementById('embedFieldsContainer');
-            for (let i = 0; i < container.children.length - 1; i++) {
-                total += (document.getElementById(`fieldName${i}`)?.value || '').length;
-                total += (document.getElementById(`fieldValue${i}`)?.value || '').length;
-            }
+            container.querySelectorAll('.form-embed-field').forEach(fieldDiv => {
+                total += (fieldDiv.querySelector('input[type="text"]')?.value || '').length;
+                total += (fieldDiv.querySelector('textarea')?.value || '').length;
+            });
             return total;
         }
 
@@ -285,9 +285,10 @@
             toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
         }
 
+        let embedFieldCounter = 0;
         function addEmbedField() {
             const container = document.getElementById('embedFieldsContainer');
-            const fieldIndex = container.children.length - 1;
+            const fieldIndex = embedFieldCounter++;
             const fieldDiv = document.createElement('div');
             fieldDiv.className = 'form-embed-field';
             fieldDiv.innerHTML = `
@@ -351,14 +352,14 @@
                 const timestamp = document.getElementById('timestamp').value;
                 const embedFields = [];
                 const fieldsContainer = document.getElementById('embedFieldsContainer');
-                for (let i = 0; i < fieldsContainer.children.length - 1; i++) {
-                    const fieldName   = document.getElementById(`fieldName${i}`)?.value;
-                    const fieldValue  = document.getElementById(`fieldValue${i}`)?.value;
-                    const fieldInline = document.getElementById(`fieldInline${i}`)?.checked;
+                fieldsContainer.querySelectorAll('.form-embed-field').forEach(fieldDiv => {
+                    const fieldName   = fieldDiv.querySelector('input[type="text"]')?.value;
+                    const fieldValue  = fieldDiv.querySelector('textarea')?.value;
+                    const fieldInline = fieldDiv.querySelector('input[type="checkbox"]')?.checked;
                     if (fieldName || fieldValue) {
                         embedFields.push({ name: fieldName || '\u200b', value: fieldValue || '\u200b', inline: fieldInline });
                     }
-                }
+                });
 
                 const fieldsHtml = embedFields.length ? `
                     <div class="embed-fields">
@@ -484,14 +485,14 @@
 
                 const embedFields = [];
                 const fieldsContainer = document.getElementById('embedFieldsContainer');
-                for (let i = 0; i < fieldsContainer.children.length - 1; i++) {
-                    const fieldName   = document.getElementById(`fieldName${i}`)?.value;
-                    const fieldValue  = document.getElementById(`fieldValue${i}`)?.value;
-                    const fieldInline = document.getElementById(`fieldInline${i}`)?.checked;
+                fieldsContainer.querySelectorAll('.form-embed-field').forEach(fieldDiv => {
+                    const fieldName   = fieldDiv.querySelector('input[type="text"]')?.value;
+                    const fieldValue  = fieldDiv.querySelector('textarea')?.value;
+                    const fieldInline = fieldDiv.querySelector('input[type="checkbox"]')?.checked;
                     if (fieldName && fieldValue) {
                         embedFields.push({ name: fieldName, value: fieldValue, inline: fieldInline });
                     }
-                }
+                });
 
                 const colorInt = parseInt(color.replace('#', ''), 16);
 

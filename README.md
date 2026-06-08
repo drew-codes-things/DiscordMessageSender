@@ -18,7 +18,7 @@ DiscordMessageSender is a single-page static web app (`index.html`) that lets yo
 
 The tool sends directly to the Discord API from the browser using the Fetch API. No server, no backend, no account required.
 
-Live at: [discordmessagesender.drew-gnr.xyz](https://discordmessagesender.drew-gnr.xyz)
+Live at: [messagesender.drew-gnr.xyz](https://messagesender.drew-gnr.xyz)
 
 ---
 
@@ -105,6 +105,20 @@ Assets/
 Open `index.html` in any modern browser, or visit the live site. No installation or dependencies required.
 
 ---
+
+## Get the Code
+
+Clone with git:
+
+```bash
+git clone https://github.com/drew-codes-things/DiscordMessageSender.git
+```
+
+Or with the [GitHub CLI](https://cli.github.com/):
+
+```bash
+gh repo clone drew-codes-things/DiscordMessageSender
+```
 
 ## License
 
