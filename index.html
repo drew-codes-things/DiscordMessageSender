@@ -395,7 +395,7 @@
             const messageType = document.getElementById('messageType').value;
             const messageLink = document.getElementById('messageLink').value.trim();
 
-            const webhookRegex = /^https:\/\/discord\.com\/api\/webhooks\/[^\/]+\/[^\/]+$/;
+            const webhookRegex = /^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com\/api\/webhooks\/[^\/]+\/[^\/?]+$/;
             if (!webhook || !webhookRegex.test(webhook)) {
                 webhookError.textContent = 'Invalid Webhook URL!';
                 webhookError.style.display = 'block';
@@ -460,8 +460,8 @@
                     const fieldName   = fieldDiv.querySelector('input[type="text"]')?.value;
                     const fieldValue  = fieldDiv.querySelector('textarea')?.value;
                     const fieldInline = fieldDiv.querySelector('input[type="checkbox"]')?.checked;
-                    if (fieldName && fieldValue) {
-                        embedFields.push({ name: fieldName, value: fieldValue, inline: fieldInline });
+                    if (fieldName || fieldValue) {
+                        embedFields.push({ name: fieldName || '\u200b', value: fieldValue || '\u200b', inline: fieldInline });
                     }
                 });
 

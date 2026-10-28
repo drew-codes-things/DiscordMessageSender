@@ -59,9 +59,6 @@ h2 {
 }
 h2::before { content: "// "; color: var(--text-faint); }
 
-/* ============================================================
-   Panels
-   ============================================================ */
 .section {
     position: relative;
     background-color: var(--panel);
@@ -95,7 +92,6 @@ h2::before { content: "// "; color: var(--text-faint); }
 .options-container { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; }
 .options-form { flex: 1; min-width: 280px; }
 
-/* Discord message preview - kept visually authentic to Discord's own UI, not the console theme */
 #preview {
     flex: 1;
     min-width: 280px;
@@ -114,9 +110,6 @@ h2::before { content: "// "; color: var(--text-faint); }
     font-size: .9rem;
 }
 
-/* ============================================================
-   Form controls
-   ============================================================ */
 select, input, textarea {
     width: 100%;
     padding: 10px;
@@ -250,9 +243,6 @@ button:hover { background-color: var(--signal); color: var(--void); }
     border-radius: 2px;
 }
 
-/* ============================================================
-   Discord message preview internals - authentic Discord styling
-   ============================================================ */
 .discord-message { display: flex; flex-direction: column; margin-bottom: 12px; font-size: .95rem; color: #dcddde; }
 .regular-message { background-color: transparent; color: #dcddde; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
 .embed-author { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
@@ -272,9 +262,6 @@ button:hover { background-color: var(--signal); color: var(--void); }
 .embed-footer span { font-size: .78rem; color: #72767d; }
 .embed-timestamp { font-size: .78rem; color: #72767d; margin-left: auto; }
 
-/* ============================================================
-   Background + console header (shared with drew-gnr.xyz)
-   ============================================================ */
 .bg-grid { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
 .bg-grid::before {
     content: "";
