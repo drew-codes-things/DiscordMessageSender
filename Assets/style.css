@@ -255,3 +255,7 @@ button:hover { background-color: var(--signal); color: var(--void); }
 }
 
 :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+.template-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.template-bar select, .template-bar input { flex: 1 1 220px; min-width: 0; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

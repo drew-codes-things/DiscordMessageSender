@@ -24,6 +24,22 @@
         </div>
 
         <div class="section">
+            <h2>Templates</h2>
+            <div class="template-bar">
+                <label for="templateSelect" class="visually-hidden">Saved templates</label>
+                <select id="templateSelect"></select>
+                <button type="button" id="loadTemplateBtn">Load</button>
+                <button type="button" id="deleteTemplateBtn" class="edit-button">Delete</button>
+            </div>
+            <div class="template-bar">
+                <label for="templateName" class="visually-hidden">Template name</label>
+                <input type="text" id="templateName" maxlength="60" placeholder="Name this message to save it as a template">
+                <button type="button" id="saveTemplateBtn">Save template</button>
+            </div>
+            <div id="templateStatus" class="status-message" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="section">
             <h2>Default Options</h2>
             <div class="options-container">
                 <div class="options-form">
@@ -292,6 +308,118 @@
                 updatePreview();
             });
             inlineEl.addEventListener('change', updatePreview);
+        }
+
+        const TEMPLATE_KEY = 'dms_templates';
+        const TEMPLATE_INPUTS = [
+            'regularMessage','title','description','color','author','authorIcon',
+            'thumbnail','image','footer','footerIcon','webhookName','webhookAvatar','timestamp'
+        ];
+
+        function readTemplates() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(TEMPLATE_KEY) || '{}');
+                return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function writeTemplates(templates) {
+            try {
+                localStorage.setItem(TEMPLATE_KEY, JSON.stringify(templates));
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function showTemplateStatus(text) {
+            document.getElementById('templateStatus').textContent = text;
+        }
+
+        function refreshTemplateList(selected) {
+            const select = document.getElementById('templateSelect');
+            const names = Object.keys(readTemplates()).sort((a, b) => a.localeCompare(b));
+            select.replaceChildren();
+            if (!names.length) {
+                select.append(new Option('No saved templates yet', ''));
+            }
+            names.forEach(name => select.append(new Option(name, name, false, name === selected)));
+            select.disabled = !names.length;
+            document.getElementById('loadTemplateBtn').disabled = !names.length;
+            document.getElementById('deleteTemplateBtn').disabled = !names.length;
+        }
+
+        function collectTemplate() {
+            const values = {};
+            TEMPLATE_INPUTS.forEach(id => { values[id] = document.getElementById(id).value; });
+            const fields = [...document.querySelectorAll('#embedFieldsContainer .form-embed-field')].map(field => ({
+                name: field.querySelector('input[type="text"]').value,
+                value: field.querySelector('textarea').value,
+                inline: field.querySelector('input[type="checkbox"]').checked
+            }));
+            return { messageType: document.getElementById('messageType').value, values, fields };
+        }
+
+        function applyTemplate(template) {
+            resetForm();
+            document.getElementById('messageType').value = template.messageType || 'dual';
+            TEMPLATE_INPUTS.forEach(id => {
+                if (typeof (template.values || {})[id] === 'string') document.getElementById(id).value = template.values[id];
+            });
+            (template.fields || []).forEach(saved => {
+                addEmbedField();
+                const index = embedFieldCounter - 1;
+                const nameEl = document.getElementById(`fieldName${index}`);
+                const valueEl = document.getElementById(`fieldValue${index}`);
+                nameEl.value = String(saved.name || '');
+                valueEl.value = String(saved.value || '');
+                document.getElementById(`fieldInline${index}`).checked = Boolean(saved.inline);
+                nameEl.dispatchEvent(new Event('input'));
+                valueEl.dispatchEvent(new Event('input'));
+            });
+            syncColorFromText();
+            handleMessageTypeChange();
+            updateDescCounter();
+            updateEmbedTotalCounter();
+            updatePreview();
+        }
+
+        function saveTemplate() {
+            const name = document.getElementById('templateName').value.trim();
+            if (!name) {
+                showTemplateStatus('Give the template a name first.');
+                return;
+            }
+            const templates = readTemplates();
+            const replacing = Object.prototype.hasOwnProperty.call(templates, name);
+            templates[name] = collectTemplate();
+            if (!writeTemplates(templates)) {
+                showTemplateStatus("Couldn't save - this browser is blocking storage.");
+                return;
+            }
+            refreshTemplateList(name);
+            document.getElementById('templateName').value = '';
+            showTemplateStatus(replacing ? `Updated "${name}".` : `Saved "${name}". The webhook URL is never stored in templates.`);
+        }
+
+        function loadTemplate() {
+            const name = document.getElementById('templateSelect').value;
+            const template = readTemplates()[name];
+            if (!template) return;
+            applyTemplate(template);
+            showTemplateStatus(`Loaded "${name}".`);
+        }
+
+        function deleteTemplate() {
+            const name = document.getElementById('templateSelect').value;
+            const templates = readTemplates();
+            if (!name || !templates[name]) return;
+            delete templates[name];
+            writeTemplates(templates);
+            refreshTemplateList();
+            showTemplateStatus(`Deleted "${name}".`);
         }
 
         function removeEmbedField(button) {
@@ -565,6 +693,13 @@
                 if (input) input.addEventListener('input', updatePreview);
             });
             document.getElementById('timestamp').addEventListener('change', updatePreview);
+            document.getElementById('saveTemplateBtn').addEventListener('click', saveTemplate);
+            document.getElementById('loadTemplateBtn').addEventListener('click', loadTemplate);
+            document.getElementById('deleteTemplateBtn').addEventListener('click', deleteTemplate);
+            document.getElementById('templateName').addEventListener('keydown', event => {
+                if (event.key === 'Enter') saveTemplate();
+            });
+            refreshTemplateList();
             updateDescCounter();
             updateEmbedTotalCounter();
         });

@@ -51,6 +51,10 @@ Live at: [messagesender.drew-gnr.xyz](https://messagesender.drew-gnr.xyz)
 
 ---
 
+## Templates
+
+Save the message you're building under a name and load it again later - the message type, text, every embed setting and all embed fields come back exactly as saved. Templates live in this browser's local storage, so they stay on your device. The webhook URL is never stored in a template, so a template can be reused across servers.
+
 ## Sending and Editing
 
 - **Send**: Submits a `POST` request to the webhook URL with the composed payload.
