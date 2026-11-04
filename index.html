@@ -47,8 +47,8 @@
                         <label for="webhook">Webhook URL</label>
                         <div style="display: flex; align-items: center; width: 100%; gap: 6px;">
                             <input type="text" id="webhook" placeholder="https://discord.com/api/webhooks/...">
-                            <button class="edit-button" onclick="toggleMessageUrl()">Edit</button>
-                            <button class="edit-button" id="clearWebhookBtn" onclick="clearSavedWebhook()" title="Clear saved webhook">Clear saved</button>
+                            <button type="button" class="edit-button" id="editToggleBtn" onclick="toggleMessageUrl()" aria-expanded="false" aria-controls="messageUrl">Edit</button>
+                            <button type="button" class="edit-button" id="clearWebhookBtn" onclick="clearSavedWebhook()" title="Clear saved webhook">Clear saved</button>
                         </div>
                         <label style="display:flex; align-items:center; gap:6px; margin-top:6px; font-size:0.84rem; color:#aaa;">
                             <input type="checkbox" id="rememberWebhook">
@@ -70,13 +70,14 @@
 
                     <div id="regularMessageSection">
                         <label for="regularMessage">Regular Message</label>
-                        <textarea id="regularMessage" rows="5" oninput="updatePreview()"></textarea>
+                        <textarea id="regularMessage" rows="5" maxlength="2000" oninput="updateContentCounter(); updatePreview();"></textarea>
+                        <div class="char-counter" id="contentCounter">0 / 2000</div>
                     </div>
 
                     <div id="embedSection">
                         <div>
                             <label for="webhookName">Webhook Name</label>
-                            <input type="text" id="webhookName">
+                            <input type="text" id="webhookName" maxlength="80">
                         </div>
                         <div>
                             <label for="webhookAvatar">Webhook Avatar URL</label>
@@ -85,7 +86,7 @@
 
                         <div>
                             <label for="title">Title</label>
-                            <input type="text" id="title" oninput="updateEmbedTotalCounter(); updatePreview();">
+                            <input type="text" id="title" maxlength="256" oninput="updateEmbedTotalCounter(); updatePreview();">
                         </div>
                         <div>
                             <label for="description">Description</label>
@@ -102,7 +103,7 @@
                         </div>
                         <div>
                             <label for="author">Author Name</label>
-                            <input type="text" id="author" oninput="updateEmbedTotalCounter(); updatePreview();">
+                            <input type="text" id="author" maxlength="256" oninput="updateEmbedTotalCounter(); updatePreview();">
                         </div>
                         <div>
                             <label for="authorIcon">Author Icon URL</label>
@@ -118,7 +119,7 @@
                         </div>
                         <div>
                             <label for="footer">Footer Text</label>
-                            <input type="text" id="footer" oninput="updateEmbedTotalCounter(); updatePreview();">
+                            <input type="text" id="footer" maxlength="2048" oninput="updateEmbedTotalCounter(); updatePreview();">
                         </div>
                         <div>
                             <label for="footerIcon">Footer Icon URL</label>
@@ -133,7 +134,7 @@
                         <div>
                             <label>Embed Fields</label>
                             <div id="embedFieldsContainer">
-                                <button type="button" onclick="addEmbedField()">Add Field</button>
+                                <button type="button" id="addFieldBtn" onclick="addEmbedField()">Add Field (0/25)</button>
                             </div>
                         </div>
 
@@ -141,8 +142,8 @@
                     </div>
 
                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
-                        <button id="sendButton" onclick="sendMessages()">Send Message</button>
-                        <button id="resetBtn" onclick="resetForm()">Reset Form</button>
+                        <button type="button" id="sendButton" onclick="sendMessages()">Send Message</button>
+                        <button type="button" id="resetBtn" onclick="resetForm()">Reset Form</button>
                         <div id="statusMessage" class="status-message"></div>
                     </div>
                 </div>
@@ -179,8 +180,17 @@
             document.getElementById('webhook').value = '';
         }
 
+        const MAX_EMBED_FIELDS = 25;
+        const CONTENT_LIMIT = 2000;
+
         function isValidHex(v) {
             return /^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(v.trim());
+        }
+
+        function normaliseHex(v) {
+            let hex = v.trim().replace(/^#/, '');
+            if (hex.length === 3) hex = hex.split('').map(ch => ch + ch).join('');
+            return '#' + hex.toLowerCase();
         }
 
         function syncColorFromPicker() {
@@ -197,8 +207,7 @@
             const raw = textInput.value.trim();
             const errorEl = document.getElementById('colorError');
             if (isValidHex(raw)) {
-                const normalised = raw.startsWith('#') ? raw : '#' + raw;
-                document.getElementById('colorPicker').value = normalised.substring(0, 7);
+                document.getElementById('colorPicker').value = normaliseHex(raw);
                 textInput.classList.remove('color-invalid');
                 errorEl.style.display = 'none';
             } else {
@@ -214,6 +223,23 @@
             const max = 4096;
             counter.textContent = `${len} / ${max}`;
             counter.className = 'char-counter' + (len > max * 0.9 ? (len >= max ? ' over' : ' warn') : '');
+        }
+
+        function updateContentCounter() {
+            const el = document.getElementById('regularMessage');
+            const counter = document.getElementById('contentCounter');
+            if (!el || !counter) return;
+            const len = el.value.length;
+            counter.textContent = `${len} / ${CONTENT_LIMIT}`;
+            counter.className = 'char-counter' + (len > CONTENT_LIMIT * 0.9 ? (len >= CONTENT_LIMIT ? ' over' : ' warn') : '');
+        }
+
+        function embedHasContent() {
+            const has = id => (document.getElementById(id)?.value || '').trim().length > 0;
+            if (['title', 'description', 'author', 'footer', 'thumbnail', 'image', 'timestamp'].some(has)) return true;
+            return [...document.querySelectorAll('#embedFieldsContainer .form-embed-field')].some(fieldDiv =>
+                (fieldDiv.querySelector('input[type="text"]')?.value || '').trim()
+                || (fieldDiv.querySelector('textarea')?.value || '').trim());
         }
 
         function getEmbedTotalChars() {
@@ -256,8 +282,10 @@
             while (container.children.length > 1) {
                 container.removeChild(container.firstChild);
             }
+            updateAddFieldButton();
 
             updateDescCounter();
+            updateContentCounter();
             updateEmbedTotalCounter();
             updateSendLabel();
             updatePreview();
@@ -272,8 +300,22 @@
         }
 
         let embedFieldCounter = 0;
+
+        function updateAddFieldButton() {
+            const container = document.getElementById('embedFieldsContainer');
+            const count = container.querySelectorAll('.form-embed-field').length;
+            const button = document.getElementById('addFieldBtn');
+            if (!button) return;
+            button.disabled = count >= MAX_EMBED_FIELDS;
+            button.textContent = count >= MAX_EMBED_FIELDS ? `Field limit reached (${MAX_EMBED_FIELDS})` : `Add Field (${count}/${MAX_EMBED_FIELDS})`;
+        }
+
         function addEmbedField() {
             const container = document.getElementById('embedFieldsContainer');
+            if (container.querySelectorAll('.form-embed-field').length >= MAX_EMBED_FIELDS) {
+                updateAddFieldButton();
+                return;
+            }
             const fieldIndex = embedFieldCounter++;
             const fieldDiv = document.createElement('div');
             fieldDiv.className = 'form-embed-field';
@@ -308,6 +350,7 @@
                 updatePreview();
             });
             inlineEl.addEventListener('change', updatePreview);
+            updateAddFieldButton();
         }
 
         const TEMPLATE_KEY = 'dms_templates';
@@ -424,6 +467,7 @@
 
         function removeEmbedField(button) {
             button.closest('.form-embed-field').remove();
+            updateAddFieldButton();
             updateEmbedTotalCounter();
             updatePreview();
         }
@@ -439,8 +483,8 @@
             if (messageType === 'embed' || messageType === 'dual') {
                 const title = document.getElementById('title').value;
                 const description = document.getElementById('description').value;
-                let color = document.getElementById('color').value || 'ef4444';
-                if (!color.startsWith('#')) color = `#${color}`;
+                const rawColor = document.getElementById('color').value || 'ef4444';
+                const color = isValidHex(rawColor) ? normaliseHex(rawColor) : '#ef4444';
                 const author = document.getElementById('author').value;
                 const authorIcon = document.getElementById('authorIcon').value;
                 const thumbnail = document.getElementById('thumbnail').value;
@@ -482,7 +526,7 @@
                             ${authorIcon ? `<img src="${escapeHtml(authorIcon)}" alt="" class="author-icon">` : ''}
                             <span class="author-name">${escapeHtml(author)}</span>
                         </div>` : ''}
-                        <div class="embed" style="border-left-color: ${isValidHex(color) ? color : '#ef4444'};">
+                        <div class="embed" style="border-left-color: ${color};">
                             ${thumbnail ? `<img src="${escapeHtml(thumbnail)}" alt="Thumbnail" class="embed-thumbnail">` : ''}
                             ${title ? `<div class="embed-title">${escapeHtml(title)}</div>` : ''}
                             ${description ? `<div class="embed-description">${nlToBr(escapeHtml(description))}</div>` : ''}
@@ -536,6 +580,9 @@
                 return;
             }
 
+            const regularText = document.getElementById('regularMessage').value;
+            const hasEmbed = messageType !== 'regular' && embedHasContent();
+
             if (messageType !== 'regular') {
                 const totalChars = getEmbedTotalChars();
                 if (totalChars > 6000) {
@@ -544,8 +591,21 @@
                 }
             }
 
-            if (messageType === 'regular' && !document.getElementById('regularMessage').value.trim()) {
+            if (regularText.length > CONTENT_LIMIT) {
+                alert(`Your message is ${regularText.length} characters. Discord allows at most ${CONTENT_LIMIT} characters of message text.`);
+                return;
+            }
+
+            if (messageType === 'embed' && !hasEmbed) {
+                alert('Your embed is empty. Add a title, description, field or image before sending.');
+                return;
+            }
+            if (messageType === 'regular' && !regularText.trim()) {
                 alert('Your message is empty. Type something to send.');
+                return;
+            }
+            if (messageType === 'dual' && !hasEmbed && !regularText.trim()) {
+                alert('Nothing to send. Type a message or fill in the embed.');
                 return;
             }
 
@@ -568,8 +628,7 @@
             if (messageType === 'embed' || messageType === 'dual') {
                 const title = document.getElementById('title').value;
                 const description = document.getElementById('description').value;
-                let color = rawColor;
-                if (!color.startsWith('#')) color = `#${color}`;
+                const color = normaliseHex(rawColor);
                 const author = document.getElementById('author').value;
                 const authorIcon = document.getElementById('authorIcon').value;
                 const thumbnail = document.getElementById('thumbnail').value;
@@ -594,18 +653,20 @@
 
                 const colorInt = parseInt(color.replace('#', ''), 16);
 
+                const embed = {
+                    title: title || undefined,
+                    description: description || undefined,
+                    color: isNaN(colorInt) ? 0xef4444 : colorInt,
+                    fields: embedFields,
+                    author: author ? { name: author, icon_url: authorIcon || undefined } : undefined,
+                    thumbnail: thumbnail ? { url: thumbnail } : undefined,
+                    image: image ? { url: image } : undefined,
+                    footer: footer ? { text: footer, icon_url: footerIcon || undefined } : undefined,
+                    timestamp: timestamp ? new Date(timestamp).toISOString() : undefined
+                };
+
                 const embedPayload = {
-                    embeds: [{
-                        title: title || undefined,
-                        description: description || undefined,
-                        color: isNaN(colorInt) ? 0xef4444 : colorInt,
-                        fields: embedFields,
-                        author: author ? { name: author, icon_url: authorIcon || undefined } : undefined,
-                        thumbnail: thumbnail ? { url: thumbnail } : undefined,
-                        image: image ? { url: image } : undefined,
-                        footer: footer ? { text: footer, icon_url: footerIcon || undefined } : undefined,
-                        timestamp: timestamp ? new Date(timestamp).toISOString() : undefined
-                    }],
+                    embeds: hasEmbed ? [embed] : [],
                     content: messageType === 'dual' ? regularMessage || undefined : undefined,
                     username: webhookName || undefined,
                     avatar_url: webhookAvatar || undefined
@@ -665,7 +726,16 @@
 
         function toggleMessageUrl() {
             const messageUrl = document.getElementById('messageUrl');
-            messageUrl.style.display = (messageUrl.style.display === 'none' || messageUrl.style.display === '') ? 'block' : 'none';
+            const button = document.getElementById('editToggleBtn');
+            const opening = (messageUrl.style.display === 'none' || messageUrl.style.display === '');
+            messageUrl.style.display = opening ? 'block' : 'none';
+            if (button) button.setAttribute('aria-expanded', String(opening));
+            if (opening) {
+                document.getElementById('messageLink').focus();
+            } else {
+                document.getElementById('messageLink').value = '';
+                updateSendLabel();
+            }
         }
 
         function handleMessageTypeChange() {
@@ -701,7 +771,9 @@
             });
             refreshTemplateList();
             updateDescCounter();
+            updateContentCounter();
             updateEmbedTotalCounter();
+            updateAddFieldButton();
         });
     </script>
 </body>

@@ -120,6 +120,8 @@ button {
     transition: background-color .15s ease, color .15s ease;
 }
 button:hover { background-color: var(--signal); color: var(--void); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button:disabled:hover { background-color: transparent; color: var(--signal); }
 
 .edit-button {
     padding: 10px;

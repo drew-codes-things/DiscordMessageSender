@@ -36,17 +36,18 @@ Live at: [messagesender.drew-gnr.xyz](https://messagesender.drew-gnr.xyz)
 
 | Field | Discord limit | Notes |
 |---|---|---|
-| Title | - | |
+| Title | 256 chars | |
 | Description | 4096 chars | Live character counter, warns at 90%, blocks at 100% |
-| Colour | - | Hex input with colour picker. Synced bidirectionally. Validates on send |
-| Author name | - | |
+| Colour | - | Hex input with colour picker (3- or 6-digit hex). Synced bidirectionally. Validates on send |
+| Author name | 256 chars | |
 | Author icon URL | - | |
 | Thumbnail URL | - | |
 | Image URL | - | |
-| Footer text | - | |
+| Footer text | 2048 chars | |
 | Footer icon URL | - | |
 | Timestamp | - | `datetime-local` input, converted to ISO 8601 before sending |
-| Embed fields | Up to 25 | Dynamically added. Each field has name (max 256 chars), value (max 1024 chars), and inline toggle. Counters warn at 90% |
+| Embed fields | Up to 25 | Dynamically added; the Add Field button disables at 25. Each field has name (max 256 chars), value (max 1024 chars), and inline toggle. Counters warn at 90% |
+| Regular message | 2000 chars | Live character counter. In Dual mode an untouched embed is left out of the payload instead of being sent as an empty box |
 | **Total embed chars** | **6000** | Aggregate counter across title + description + author + footer + all field names and values. Warns at 5400, blocks send at 6000 |
 
 ---
@@ -85,6 +86,7 @@ Save the message you're building under a name and load it again later - the mess
 |---|---|
 | Missing or invalid webhook URL | Inline error shown, send blocked |
 | Invalid hex colour | Inline error shown, send blocked |
+| Empty message / empty embed | Alert shown, send blocked (Discord rejects empty payloads) |
 | Embed total over 6000 chars | Alert shown with exact count, send blocked |
 | HTTP 404 on edit | Explains the message must belong to the same webhook |
 | HTTP 401 / 403 | Reports invalid or expired webhook URL |
