@@ -1,131 +1,44 @@
-<div align="center">
+# Discord message sender
 
-# DiscordMessageSender
+![Screenshot](screenshot.jpg)
 
-**A browser-based tool for composing and sending Discord webhook messages, with a live Discord-style preview.**
+Send and edit Discord webhook messages with embeds, with a live preview. Live at <https://messagesender.drew-gnr.xyz/>.
 
-[![HTML](https://img.shields.io/badge/html-5-E34F26?style=flat-square&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
-[![JavaScript](https://img.shields.io/badge/javascript-ES2020-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+## Features
 
-</div>
+- Plain message, embed, or both
+- Custom name and avatar for the post
+- Embed with title, link, description, colour, author, thumbnail, image, footer, timestamp and up to 25 fields
+- Fields can be moved up and down or removed without losing what's typed in the others
+- Live preview in Discord's style, with bold, italic, underline, strikethrough, inline code, code blocks, quotes and links
+- Every Discord limit is checked before sending (2000 message characters, 6000 per embed, 25 fields and the rest), with the problem shown next to the field
+- Sends with `?wait=true`, so you get the message id back. "Edit this one next" switches straight to editing it
+- Edit mode takes a message link or id and updates the message with `PATCH`
+- Thread webhooks (`?thread_id=`) are kept
+- JSON panel to copy the payload or load one back in
+- Save webhooks under names like "Announcements" or "Logs" and switch between them with one click (up to 20)
+- Templates: save the message, embed and fields under a name and load them back later (up to 30). Templates never include a webhook link
+- Draft saves in the browser as you type. Webhook links are only saved if you save them by name
+- Embeds default to the site red, `#e5383b`
+- Clear error messages for bad links, deleted webhooks, missing messages and rate limits
+- <kbd>Ctrl</kbd>+<kbd>Enter</kbd> sends
 
----
+## Privacy
 
-## Overview
+Everything goes straight from your browser to Discord. Nothing passes through drew-gnr.xyz. Anyone with a webhook link can post as that webhook, so keep it private.
 
-DiscordMessageSender is a single-page static web app (`index.html`) that lets you compose Discord webhook messages entirely in the browser. It supports embed messages, regular text messages, or a dual mode combining both. A live Discord-style preview renders on the right as you type, so you can see exactly how the message will appear before sending.
+## Files
 
-The tool sends directly to the Discord API from the browser using the Fetch API. No server, no backend, no account required.
+| Path | What it is |
+| --- | --- |
+| `index.html` | The page |
+| `assets/payload.js` | Webhook parsing, validation and payload building, also loadable in Node |
+| `assets/app.js` | Form, preview and sending |
+| `assets/app.css` | Layout and the Discord-style preview |
+| `assets/theme.css`, `assets/ui.js` | Shared drew-gnr.xyz look and helpers |
+| `assets/fonts/` | IBM Plex, self-hosted (SIL OFL, see `OFL.txt`) |
+| `tests/payload.test.js` | `node tests/payload.test.js` |
 
-Live at: [messagesender.drew-gnr.xyz](https://messagesender.drew-gnr.xyz)
+## Hosting
 
----
-
-## Message Types
-
-| Mode | What it sends |
-|---|---|
-| **Embed** | A Discord embed with all embed fields only |
-| **Regular** | A plain text content message only |
-| **Dual** | Both an embed and a plain text content message in the same webhook payload |
-
----
-
-## Embed Fields
-
-| Field | Discord limit | Notes |
-|---|---|---|
-| Title | 256 chars | |
-| Description | 4096 chars | Live character counter, warns at 90%, blocks at 100% |
-| Colour | - | Hex input with colour picker (3- or 6-digit hex). Synced bidirectionally. Validates on send |
-| Author name | 256 chars | |
-| Author icon URL | - | |
-| Thumbnail URL | - | |
-| Image URL | - | |
-| Footer text | 2048 chars | |
-| Footer icon URL | - | |
-| Timestamp | - | `datetime-local` input, converted to ISO 8601 before sending |
-| Embed fields | Up to 25 | Dynamically added; the Add Field button disables at 25. Each field has name (max 256 chars), value (max 1024 chars), and inline toggle. Counters warn at 90% |
-| Regular message | 2000 chars | Live character counter. In Dual mode an untouched embed is left out of the payload instead of being sent as an empty box |
-| **Total embed chars** | **6000** | Aggregate counter across title + description + author + footer + all field names and values. Warns at 5400, blocks send at 6000 |
-
----
-
-## Templates
-
-Save the message you're building under a name and load it again later - the message type, text, every embed setting and all embed fields come back exactly as saved. Templates live in this browser's local storage, so they stay on your device. The webhook URL is never stored in a template, so a template can be reused across servers.
-
-## Sending and Editing
-
-- **Send**: Submits a `POST` request to the webhook URL with the composed payload.
-- **Edit**: Toggle the `Edit` button to reveal a Message Link field. Paste a Discord message URL (`https://discord.com/channels/...`). The send button switches to `Edit Message` and the request becomes a `PATCH` to `{webhook}/messages/{messageId}`. The message must belong to the same webhook.
-- A confirmation dialog appears before every send or edit.
-- A toast notification appears at the bottom of the screen after a successful send.
-
----
-
-## Webhook URL
-
-- The webhook URL is validated against the pattern `https://discord.com/api/webhooks/{id}/{token}` before sending.
-- An opt-in `Remember webhook URL on this browser` checkbox saves the URL to `localStorage`. The `Clear saved` button removes it.
-- The URL is stored in plaintext in your browser profile. A warning is shown below the checkbox.
-
----
-
-## Webhook Identity
-
-- **Webhook Name**: Overrides the webhook's display name for this message.
-- **Webhook Avatar URL**: Overrides the webhook's avatar for this message.
-
----
-
-## Error Handling
-
-| Scenario | Behaviour |
-|---|---|
-| Missing or invalid webhook URL | Inline error shown, send blocked |
-| Invalid hex colour | Inline error shown, send blocked |
-| Empty message / empty embed | Alert shown, send blocked (Discord rejects empty payloads) |
-| Embed total over 6000 chars | Alert shown with exact count, send blocked |
-| HTTP 404 on edit | Explains the message must belong to the same webhook |
-| HTTP 401 / 403 | Reports invalid or expired webhook URL |
-| Other HTTP errors | Shows Discord's error message and status code |
-
----
-
-## File Structure
-
-```
-index.html          - Entire app (HTML, CSS, JS)
-Assets/
-  style.css         - Page styles
-  message_link.js   - extractMessageId() helper for parsing Discord message links
-  icon.png          - Favicon
-```
-
----
-
-## Usage
-
-Open `index.html` in any modern browser, or visit the live site. No installation or dependencies required.
-
----
-
-## Get the Code
-
-Clone with git:
-
-```bash
-git clone https://github.com/drew-codes-things/DiscordMessageSender.git
-```
-
-Or with the [GitHub CLI](https://cli.github.com/):
-
-```bash
-gh repo clone drew-codes-things/DiscordMessageSender
-```
-
-## License
-
-MIT - made by [Drew](https://github.com/drew-codes-things)
+Static files only. `CNAME` is set for GitHub Pages.
