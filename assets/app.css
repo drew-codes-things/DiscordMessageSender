@@ -95,3 +95,6 @@ a.dc-author-name:hover { text-decoration: underline; }
     .input-with-btn { flex-wrap: wrap; }
     .input-with-btn input { flex-basis: 100%; }
 }
+@media (max-width: 820px), (pointer: coarse) {
+    .json-card textarea { font-size: 16px; }
+}
